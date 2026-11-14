@@ -1,30 +1,40 @@
+import os
 import requests
-from flask import Flask, Response
+from flask import Flask, request
+
+TOKEN = os.environ['8086038655:AAG5FfTAz-WVV-xpdi64UZrUm8aWsm1U7DA']
+CHANNEL = os.environ['CHANNEL']  # যেমন @your_channel_username
+API = f'https://api.telegram.org/bot{TOKEN}'
 
 app = Flask(__name__)
 
-TOKEN = '8086038655:AAG5FfTAz-WVV-xpdi64UZrUm8aWsm1U7DA'  # এখানে আপনার বটের টোকেন বসাবেন
-CHANNEL_USERNAME = (
-    '@movielover322'  # এখানে আপনার পাবলিক চ্যানেলের ইউজারনেম দেবেন
-)
+
+@app.route('/')
+def home():
+    return 'Bot is running'
 
 
-@app.route('/video/<int:msg_id>')
-def stream_video(msg_id):
-  # ১. পাবলিক চ্যানেল থেকে মেসেজ ইনফো নেওয়া
-  get_msg_url = f'https://api.telegram.org/bot{TOKEN}/forwardMessage?chat_id=@telegram&from_chat_id={CHANNEL_USERNAME}&message_id={msg_id}'
-  # (অথবা সরাসরি கெট ফাইল মেথড দিয়েও করা যায়)
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    update = request.get_json(silent=True) or {}
+    msg = update.get('message')
+    if not msg:
+        return 'ok'
 
-  # সহজ পদ্ধতি: সরাসরি টেলিগ্রাম থেকে ফাইলের লিংক ফেচ করা
-  # (পাবলিক চ্যানেলের জন্য আমরা সরাসরি টেলিগ্রামের ফাইল পাথ জেনারেট করতে পারি)
-  get_file_url = (
-      f'https://api.telegram.org/bot{TOKEN}/getChat?chat_id={CHANNEL_USERNAME}'
-  )
+    chat_id = msg['chat']['id']
+    text = msg.get('text', '')
 
-  # বিকল্প ও সবচেয়ে কার্যকরী উপায় হলো আগের মতো file_id ব্যবহার করা,
-  # কারণ পাবলিক চ্যানেলে ভিডিও আপলোড করলেই বটে বা সহজে file_id পাওয়া যায়।
-  return 'Ready for streaming!'
-
-
-if __name__ == '__main__':
-  app.run(host='0.0.0.0', port=5000)
+    if text.startswith('/start '):
+        arg = text.split(' ', 1)[1].strip()
+        if arg.isdigit():
+            requests.post(f'{API}/copyMessage', json={
+                'chat_id': chat_id,
+                'from_chat_id': CHANNEL,
+                'message_id': int(arg),
+            })
+    elif text == '/start':
+        requests.post(f'{API}/sendMessage', json={
+            'chat_id': chat_id,
+            'text': 'ভিডিওর লিংকে ক্লিক করে এখানে আসুন।',
+        })
+    return 'ok'
