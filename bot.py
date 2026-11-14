@@ -3,7 +3,7 @@ import requests
 from flask import Flask, request
 
 TOKEN = os.environ['8086038655:AAG5FfTAz-WVV-xpdi64UZrUm8aWsm1U7DA']
-CHANNEL = os.environ['CHANNEL']  # যেমন @your_channel_username
+CHANNEL = os.environ['@movielover322']  # যেমন @your_channel_username
 API = f'https://api.telegram.org/bot{TOKEN}'
 
 app = Flask(__name__)
